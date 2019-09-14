@@ -1,13 +1,10 @@
-[![MIT License][license-badge]][LICENSE]
+# Club Management App
 
-# Scala Play React Seed
-
-> Use play framework to develop the web application backend/services and frontend using React Create App, all in a totally integrated workflow and single unified console. This approach will deliver perfect development experience without CORS hassle. 
+>  Simple club management app with two functions: add and list clubs. Created for trying out Play + React and for playing around with [Akka Reactive Streams](https://doc.akka.io/docs/akka/2.5.23/stream/index.html).
  
 
-Read more @ http://bit.ly/2A1AzEq
-
-[![Scala Play React Seed](https://github.com/yohangz/scala-play-react-seed/blob/master/react.png)](http://bit.ly/2A1AzEq)
+Read more about the forked base project @ http://bit.ly/2A1AzEq ->
+[Scala Play React Seed](http://bit.ly/2A1AzEq)
 
 ## Version Summary
 
@@ -42,146 +39,73 @@ Read more @ http://bit.ly/2A1AzEq
 
 * This seed is not using [scala play views](https://www.playframework.com/documentation/2.6.x/ScalaTemplates). All the views and frontend associated routes are served via [React](https://reactjs.org/) code base under `ui` directory.
 
-## Complete Directory Layout
+## Database Schema
 
 ```
-├── /app/                                 # The backend (scala play) sources (controllers, models, services)
-│     └── /controllers/                   # Backend controllers
-│           └── FrontendController.scala  # Asset controller wrapper serving frontend assets and artifacts
-├── /conf/                                # Configurations files and other non-compiled resources (on classpath)
-│     ├── application.conf                # Play application configuratiion file.
-│     ├── logback.xml                     # Logging configuration
-│     └── routes                          # Routes definition file
-├── /logs/                                # Log directory
-│     └── application.log                 # Application log file
-├── /project/                             # Contains project build configuration and plugins
-│     ├── FrontendCommands.scala          # Frontend build command mapping configuration
-│     ├── FrontendRunHook.scala           # Forntend build PlayRunHook (trigger frontend serve on sbt run)
-│     ├── build.properties                # Marker for sbt project
-│     └── plugins.sbt                     # SBT plugins declaration
-├── /public/                              # Frontend build artifacts will be copied to this directory
-├── /target/                              # Play project build artifact directory
-│     ├── /universal/                     # Application packaging
-│     └── /web/                           # Compiled web assets
-├── /test/                                # Contains unit tests of backend sources
-├── /ui/                                  # React frontend source (based on Create React App)
-│     ├── /public/                        # Contains the index.html file
-│     ├── /node_modules/                  # 3rd-party frontend libraries and utilities
-│     ├── /src/                           # The frontend source codebase of the application
-│     ├── .editorconfig                   # Define and maintain consistent coding styles between different editors and IDEs
-│     ├── .gitignore                      # Contains ui files to be ignored when pushing to git
-│     ├── package.json                    # NPM configuration of frontend source
-│     ├── README.md                       # Contains all user guide details for the ui
-│     └── yarn.lock                       # Yarn lock file
-├── .gitignore                            # Contains files to be ignored when pushing to git
-├── build.sbt                             # Play application SBT configuration
-├── LICENSE                               # License Agreement file
-├── README.md                             # Application user guide
-└── ui-build.sbt                          # SBT command hooks associated with frontend npm scripts 
+CREATE TABLE CLUB_MEMBERS (
+  CLUB VARCHAR(255) NOT NULL,
+  MEMBER VARCHAR(255) NOT NULL
+);
 ```
 
-## What is new in here?
+## HTTP Endpoints
 
-### FrontendCommands.scala
+* HTTP GET /api/clubs
+  * Get all clubs, returns an array of clubs
+* HTTP POST /api/clubs
+  * Post a new club
+  
+### JSON Schema For HTTP Payloads
 
-* Frontend build command mapping configuration.
-
+#### Schema
 ```
-    ├── /project/
-    │     ├── FrontendCommands.scala
-```
-
-
-### FrontendRunHook.scala
-
-* PlayRunHook implementation to trigger ``npm run start`` on ``sbt run``.
-
-```
-    ├── /project/
-    │     ├── FrontendRunHook.scala
-```
-
-### FrontendController.scala
-
-* Asset controller wrapper serving frontend assets and artifacts.
-
-```
-    ├── /app/                                 
-    │     └── /controllers/                   
-    │           └── FrontendController.scala
-```
-
-### ui-build.sbt
-
-* This file contains the build task hooks to trigger frontend npm scripts on sbt command execution.
-
-### npm run commands
-
-* New and modified npm scripts of [Create React App](https://github.com/facebookincubator/create-react-app) generated package.json.
-* Check [UI README.md](./ui/README.md) to see all available frontend build tasks.
-
-```
-├── /ui/                       
-│     ├── package.json          
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "Club schema for HTTP payloads",
+  "type": "object",
+  "required": [ "name", "members" ],
+  "properties": {
+    "name": {
+      "description": "Name of the club",
+      "type": "string",
+      "minLength": 1
+    },
+    "members": {
+      "description": "List of members in the club",
+      "type": "array",
+      "minItems": 1,
+      "items":  {
+        "type": "object",
+        "required": [ "name" ]
+      }
+    }
+  }
+}
 ```
 
-## Routes
-
+#### Example
 ```
-├── /conf/      
-│     ├── routes
-```
-
-* The following route configuration map index.html to entry route (root). This should be placed as the initial route.
-
-```
-GET        /             controllers.FrontendController.index()
+{
+  "name": "Club Name",
+  "members": [
+    { "name": "Club Member1" },
+    { "name": "Club Member2" }
+  ]
+}
 ```
 
-* All API routes should be prefixed with API prefix defined under ``application.conf`` (Default prefix ``apiPrefix = "api"``) 
+## Akka Reactive Streams
 
-Example API route:
-
-```
-GET        /api/summary  controllers.HomeController.appSummary
-```
-
-* The following route is being used to serve frontend associated build artifacts (css, js) and static assets (images, etc.). This should be placed as the final route.
+Data is processing to and from the database is enabled by creating a data management protocol by using stacked [BidiFlows](https://doc.akka.io/api/akka/2.5.23/akka/stream/scaladsl/BidiFlow$.html): codec and grouping.
 
 ```
-GET        /*file        controllers.FrontendController.assetOrDefault(file)
+                       +-------------------------------------------+
+                       | stack                                     |
+                       |                                           |
+ +-------------+       |  +-------+                  +----------+  |            +----------+
+ |             |  ~>   O~~o       |       ~>         |          o~~O    ~>      |          |
+ | Application | Club  |  | codec | List[ClubMember] | grouping |  | ClubMember | Database |
+ |             |  <~   O~~o       |       <~         |          o~~O    <~      |          |
+ +-------------+       |  +-------+                  +----------+  |            +----------+
+                       +-------------------------------------------+
 ```
-
-**Note: _On production build all the front end React build artifacts will be copied to the `public` folder._**
-
-## Can be used to implement any front end/ui build!
-
-* Simply replace the ui directory with the build of your choice
-* Make output directory ROOT/public/
-* Implement a proxy to localhost:9000
-
-## Looking for some other frontend framework or language choice
-
-* [Java Play React Seed](https://github.com/yohangz/java-play-react-seed)
-* [Scala Play Angular Seed](https://github.com/yohangz/scala-play-angular-seed)
-* [Java Play Angular Seed](https://github.com/yohangz/java-play-angular-seed)
-* [Scala Play Vuejs Seed](https://github.com/duncannevin/scala-play-vue-seed) by [Duncan Nevin](https://github.com/duncannevin)
-* [Java Play Vuejs Seed](https://github.com/duncannevin/java-play-vue-seed) by [Duncan Nevin](https://github.com/duncannevin)
-
-## Contributors
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-|[<img src="https://avatars2.githubusercontent.com/u/5279079?s=400&v=4" width="100px;"/><br /><sub>Yohan Gomez</sub>][yohan-profile]| [<img src="https://avatars2.githubusercontent.com/u/6312524?s=400&u=efc9267c6f903c379fafaaf7b3b0d9a939474c01&v=4" width="100px;"/><br /><sub>Lahiru Jayamanna</sub>][lahiru-profile]<br />| [<img src="https://avatars0.githubusercontent.com/u/3881403?s=400&v=4" width="100px;"/><br /><sub>Gayan Attygalla</sub>](https://github.com/Arty26)|
-| :---: | :---: | :---: |
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-## License
-
-This software is licensed under the MIT license
-
-[license-badge]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
-[license]: https://github.com/yohangz/java-play-react-seed/blob/master/README.md
-
-[yohan-profile]: https://github.com/yohangz
-[lahiru-profile]: https://github.com/lahiruz
-[gayan-profile]: https://github.com/Arty26

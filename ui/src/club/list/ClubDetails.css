@@ -1,0 +1,13 @@
+.ClubDetails {
+  background-color: LightGray;
+  padding: 10px;
+  margin-left: 30%;
+  margin-right: 30%;
+  margin-bottom: 5px;
+}
+
+.ClubName {
+  font-weight: bold;
+  font-style: oblique;
+  font-size: 25px;
+}

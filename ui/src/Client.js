@@ -1,11 +1,23 @@
 /* eslint-disable no-undef */
-function getSummary(cb) {
-  return fetch('/api/summary', {
+function getClubs(cb) {
+  return fetch('/api/clubs', {
     accept: "application/json"
   })
     .then(checkStatus)
     .then(parseJSON)
     .then(cb);
+}
+
+function postClub(club, response) {
+  return fetch('/api/clubs', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(club)
+  })
+  .then(checkStatus)
+  .then(response)
 }
 
 function checkStatus(response) {
@@ -23,5 +35,5 @@ function parseJSON(response) {
   return response.json();
 }
 
-const Client = { getSummary };
+const Client = { getClubs, postClub };
 export default Client;
