@@ -96,7 +96,7 @@ CREATE TABLE CLUB_MEMBERS (
 
 ## Akka Reactive Streams
 
-Data is processing to and from the database is enabled by creating a data management protocol by using stacked [BidiFlows](https://doc.akka.io/api/akka/2.5.23/akka/stream/scaladsl/BidiFlow$.html): codec and grouping.
+Data processing between application and database is enabled by creating a data management protocol by using stacked custom [BidiFlows](https://doc.akka.io/api/akka/2.5.23/akka/stream/scaladsl/BidiFlow$.html): codec and grouping.
 
 ```
                        +-------------------------------------------+
