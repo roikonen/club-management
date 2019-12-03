@@ -7,7 +7,7 @@ import scala.collection.mutable.ListBuffer
 
 /**
  * Groups incoming stream into lists of similar following objects in appearance order.
- * e.g. 1,1,1,2,2,3,3,1,1,1 => List(1,1,1), List(2,2), List(3,3), List(1,1,1,1)
+ * e.g. 1,1,1,2,2,3,3,1,1,1 => List(1,1,1), List(2,2), List(3,3), List(1,1,1)
  *      when "similar" function: first.equals(second)
  *
  * @param similar a function that defines what means being equal
